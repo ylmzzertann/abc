@@ -1,11 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Trophy, Award, Star, BookOpen, Target, Zap, Flame, Crown, Lock, TrendingUp, Users, Medal } from "lucide-react"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Trophy, Award, Star, BookOpen, Target, Zap, Flame, Crown, Lock, TrendingUp, Users, Medal, Camera, User } from "lucide-react"
 
 const ACHIEVEMENTS = [
   {
@@ -145,6 +149,48 @@ export function ProfileView() {
   const [totalPoints, setTotalPoints] = useState(450)
   const [level, setLevel] = useState(5)
   const [nextLevelPoints, setNextLevelPoints] = useState(500)
+  const [user, setUser] = useState<any>(null)
+  const [profilePhoto, setProfilePhoto] = useState("")
+
+  useEffect(() => {
+    const userData = localStorage.getItem("bookmedia_user")
+    if (userData) {
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+      setProfilePhoto(parsedUser.profilePhoto || "")
+    }
+  }, [])
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const newPhoto = reader.result as string
+        setProfilePhoto(newPhoto)
+        // Update localStorage
+        const userData = localStorage.getItem("bookmedia_user")
+        if (userData) {
+          const parsedUser = JSON.parse(userData)
+          parsedUser.profilePhoto = newPhoto
+          localStorage.setItem("bookmedia_user", JSON.stringify(parsedUser))
+          setUser(parsedUser)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemovePhoto = () => {
+    setProfilePhoto("")
+    const userData = localStorage.getItem("bookmedia_user")
+    if (userData) {
+      const parsedUser = JSON.parse(userData)
+      parsedUser.profilePhoto = ""
+      localStorage.setItem("bookmedia_user", JSON.stringify(parsedUser))
+      setUser(parsedUser)
+    }
+  }
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
@@ -175,6 +221,52 @@ export function ProfileView() {
         <h2 className="text-2xl font-bold mb-2">Profil & Başarılar</h2>
         <p className="text-muted-foreground">Başarılarınızı keşfedin ve sıralamada yükselmeye çalışın</p>
       </div>
+
+      {/* Profile Photo Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profil Fotoğrafı</CardTitle>
+          <CardDescription>Profil fotoğrafınızı ekleyin veya değiştirin</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <Avatar className="w-32 h-32">
+              {profilePhoto ? (
+                <AvatarImage src={profilePhoto} alt="Profil" />
+              ) : (
+                <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-4xl">
+                  <User className="w-16 h-16" />
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div className="flex flex-col items-center gap-2">
+              <Label htmlFor="profile-photo-edit" className="cursor-pointer">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                  <Camera className="w-4 h-4" />
+                  <span>{profilePhoto ? "Fotoğrafı Değiştir" : "Fotoğraf Ekle"}</span>
+                </div>
+              </Label>
+              <Input
+                id="profile-photo-edit"
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
+              {profilePhoto && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRemovePhoto}
+                >
+                  Fotoğrafı Kaldır
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Level Card */}
       <Card className="bg-gradient-to-br from-amber-500 to-orange-600 text-white border-0">

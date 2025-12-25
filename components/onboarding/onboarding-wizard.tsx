@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { BookOpen, Target, TrendingUp, Users, ChevronRight, ChevronLeft } from "lucide-react"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { BookOpen, Target, TrendingUp, Users, ChevronRight, ChevronLeft, Camera, User } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 
 const GENRES = [
@@ -30,9 +31,10 @@ export function OnboardingWizard() {
     dailyGoal: 30,
     yearlyGoal: 24,
     notificationsEnabled: true,
+    profilePhoto: "" as string,
   })
 
-  const totalSteps = 3
+  const totalSteps = 4
   const progress = (step / totalSteps) * 100
 
   const toggleGenre = (genre: string) => {
@@ -44,10 +46,25 @@ export function OnboardingWizard() {
     }))
   }
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreferences((prev) => ({
+          ...prev,
+          profilePhoto: reader.result as string,
+        }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleComplete = () => {
     // Save preferences to localStorage
     const user = JSON.parse(localStorage.getItem("bookmedia_user") || "{}")
     user.preferences = preferences
+    user.profilePhoto = preferences.profilePhoto
     user.onboarded = true
     localStorage.setItem("bookmedia_user", JSON.stringify(user))
 
@@ -83,17 +100,20 @@ export function OnboardingWizard() {
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4">
             {step === 1 && <BookOpen className="w-6 h-6 text-white" />}
             {step === 2 && <Target className="w-6 h-6 text-white" />}
-            {step === 3 && <TrendingUp className="w-6 h-6 text-white" />}
+            {step === 3 && <Camera className="w-6 h-6 text-white" />}
+            {step === 4 && <TrendingUp className="w-6 h-6 text-white" />}
           </div>
           <CardTitle className="text-2xl">
             {step === 1 && "Favori Türleriniz"}
             {step === 2 && "Okuma Hedefleriniz"}
-            {step === 3 && "Hazırsınız!"}
+            {step === 3 && "Profil Fotoğrafı"}
+            {step === 4 && "Hazırsınız!"}
           </CardTitle>
           <CardDescription>
             {step === 1 && "Hangi türleri okumayı seviyorsunuz? (En az 3 tür seçin)"}
             {step === 2 && "Günlük ve yıllık okuma hedeflerinizi belirleyin"}
-            {step === 3 && "Okuma yolculuğunuz başlamak üzere!"}
+            {step === 3 && "Profil fotoğrafınızı ekleyin (opsiyonel)"}
+            {step === 4 && "Okuma yolculuğunuz başlamak üzere!"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -156,6 +176,48 @@ export function OnboardingWizard() {
           )}
 
           {step === 3 && (
+            <div className="space-y-6">
+              <div className="flex flex-col items-center justify-center space-y-4 py-8">
+                <Avatar className="w-32 h-32">
+                  {preferences.profilePhoto ? (
+                    <AvatarImage src={preferences.profilePhoto} alt="Profil" />
+                  ) : (
+                    <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white text-4xl">
+                      <User className="w-16 h-16" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="text-center space-y-2">
+                  <Label htmlFor="profile-photo" className="cursor-pointer">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                      <Camera className="w-4 h-4" />
+                      <span>{preferences.profilePhoto ? "Fotoğrafı Değiştir" : "Fotoğraf Ekle"}</span>
+                    </div>
+                  </Label>
+                  <Input
+                    id="profile-photo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                  />
+                  {preferences.profilePhoto && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPreferences((prev) => ({ ...prev, profilePhoto: "" }))}
+                    >
+                      Fotoğrafı Kaldır
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">Bu adımı atlayabilirsiniz, sonradan profilinizden ekleyebilirsiniz</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
             <div className="space-y-4 py-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -202,14 +264,25 @@ export function OnboardingWizard() {
                 Geri
               </Button>
             )}
-            <Button
-              onClick={handleNext}
-              disabled={step === 1 && preferences.favoriteGenres.length < 3}
-              className="ml-auto bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-            >
-              {step === totalSteps ? "Başla" : "İleri"}
-              {step < totalSteps && <ChevronRight className="w-4 h-4 ml-1" />}
-            </Button>
+            <div className="flex gap-2 ml-auto">
+              {step === 3 && (
+                <Button
+                  onClick={handleNext}
+                  variant="outline"
+                >
+                  Atla
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              )}
+              <Button
+                onClick={handleNext}
+                disabled={step === 1 && preferences.favoriteGenres.length < 3}
+                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              >
+                {step === totalSteps ? "Başla" : "İleri"}
+                {step < totalSteps && <ChevronRight className="w-4 h-4 ml-1" />}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
