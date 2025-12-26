@@ -1113,6 +1113,10 @@
     height: calc(var(--spacing) * 24);
   }
 
+  .h-32 {
+    height: calc(var(--spacing) * 32);
+  }
+
   .h-48 {
     height: calc(var(--spacing) * 48);
   }
@@ -1691,6 +1695,12 @@
 
   .justify-self-end {
     justify-self: flex-end;
+  }
+
+  .truncate {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   .overflow-auto {
@@ -3394,6 +3404,12 @@
   @media (hover: hover) {
     .hover\:underline:hover {
       text-decoration-line: underline;
+    }
+  }
+
+  @media (hover: hover) {
+    .hover\:opacity-80:hover {
+      opacity: .8;
     }
   }
 
